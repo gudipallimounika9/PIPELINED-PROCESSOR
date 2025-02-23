@@ -1,0 +1,65 @@
+module PipelinedProcessor;
+
+  reg [7:0] instruction_memory [0:15];
+  reg [7:0] data_memory [0:15];
+  reg [7:0] registers [0:3];
+
+  reg [7:0] IF_ID_instr;
+  reg [7:0] ID_EX_instr;
+  reg [7:0] EX_MEM_result;
+  reg [7:0] MEM_WB_result;
+
+  integer i;
+
+  initial begin
+    // Initialize instruction memory
+    instruction_memory[0] = 8'b00000001; // ADD
+    instruction_memory[1] = 8'b00000010; // SUB
+    instruction_memory[2] = 8'b00000011; // LOAD
+    instruction_memory[3] = 8'b00000000; // NOP
+
+    // Initialize data memory
+    for (i = 0; i < 16; i = i + 1) begin
+      data_memory[i] = i;
+    end
+
+    // Initialize registers
+    for (i = 0; i < 4; i = i + 1) begin
+      registers[i] = i;
+    end
+
+    // Pipeline initialization
+    IF_ID_instr = 0;
+    ID_EX_instr = 0;
+    EX_MEM_result = 0;
+    MEM_WB_result = 0;
+  end
+
+  always @(*) begin
+    // Instruction Fetch (IF)
+    IF_ID_instr = instruction_memory[0];
+
+    // Instruction Decode (ID)
+    ID_EX_instr = IF_ID_instr;
+
+    // Execute (EX)
+    case (ID_EX_instr)
+      8'b00000001: EX_MEM_result = registers[0] + registers[1]; // ADD
+      8'b00000010: EX_MEM_result = registers[0] - registers[1]; // SUB
+      8'b00000011: EX_MEM_result = data_memory[0]; // LOAD
+      default: EX_MEM_result = 0;
+    endcase
+
+    // Memory Access (MEM)
+    MEM_WB_result = EX_MEM_result;
+
+    // Write Back (WB)
+    registers[2] = MEM_WB_result;
+  end
+
+  initial begin
+    #10;
+    $display("Final value in register 2: %d", registers[2]);
+  end
+
+endmodule
